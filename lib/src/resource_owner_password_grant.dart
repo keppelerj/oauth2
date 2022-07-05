@@ -53,7 +53,6 @@ Future<Client> resourceOwnerPasswordGrant(
     CredentialsRefreshedCallback? onCredentialsRefreshed,
     http.Client? httpClient,
     String? delimiter,
-    Map<String, String> headers=const {},
     Map<String, String> data=const {},
     Map<String, dynamic> Function(MediaType? contentType, String body)?
         getParameters}) async {
@@ -63,10 +62,11 @@ Future<Client> resourceOwnerPasswordGrant(
   var body = {
     'grant_type': 'password',
     'username': username,
-    'password': password
-  }..addAll(data);
+    'password': password,
+     ...data
+  };
 
-
+  var headers = <String, String>{};
   if (identifier != null) {
     if (basicAuth) {
       headers['Authorization'] = basicAuthHeader(identifier, secret!);
