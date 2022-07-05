@@ -54,6 +54,7 @@ Future<Client> resourceOwnerPasswordGrant(
     http.Client? httpClient,
     String? delimiter,
     Map<String, String> headers=const {},
+    Map<String, String> data=const {},
     Map<String, dynamic> Function(MediaType? contentType, String body)?
         getParameters}) async {
   delimiter ??= ' ';
@@ -63,7 +64,7 @@ Future<Client> resourceOwnerPasswordGrant(
     'grant_type': 'password',
     'username': username,
     'password': password
-  };
+  }..addAll(data);
 
 
   if (identifier != null) {
