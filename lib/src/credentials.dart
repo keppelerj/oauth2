@@ -24,9 +24,9 @@ typedef CredentialsRefreshedCallback = void Function(Credentials);
 ///
 /// Many authorization servers will attach an expiration date to a set of
 /// credentials, along with a token that can be used to refresh the credentials
-/// once they've expired. The [Client] will automatically refresh its
+/// once they've expired. The [http.Client] will automatically refresh its
 /// credentials when necessary. It's also possible to explicitly refresh them
-/// via [Client.refreshCredentials] or [Credentials.refresh].
+/// via [http.Client.refreshCredentials] or [Credentials.refresh].
 ///
 /// Note that a given set of credentials can only be refreshed once, so be sure
 /// to save the refreshed credentials for future use.
@@ -128,12 +128,12 @@ class Credentials {
   ///
   /// Throws a [FormatException] if the JSON is incorrectly formatted.
   factory Credentials.fromJson(String json) {
-    void validate(condition, message) {
+    void validate(bool condition, String message) {
       if (condition) return;
       throw FormatException('Failed to load credentials: $message.\n\n$json');
     }
 
-    var parsed;
+    dynamic parsed;
     try {
       parsed = jsonDecode(json);
     } on FormatException {
@@ -141,12 +141,15 @@ class Credentials {
     }
 
     validate(parsed is Map, 'was not a JSON map');
+
+    parsed = parsed as Map;
     validate(parsed.containsKey('accessToken'),
         'did not contain required field "accessToken"');
     validate(
-        parsed['accessToken'] is String,
-        'required field "accessToken" was not a string, was '
-        '${parsed["accessToken"]}');
+      parsed['accessToken'] is String,
+      'required field "accessToken" was not a string, was '
+      '${parsed["accessToken"]}',
+    );
 
     for (var stringField in ['refreshToken', 'idToken', 'tokenEndpoint']) {
       var value = parsed[stringField];
@@ -159,22 +162,28 @@ class Credentials {
         'field "scopes" was not a list, was "$scopes"');
 
     var tokenEndpoint = parsed['tokenEndpoint'];
+    Uri? tokenEndpointUri;
     if (tokenEndpoint != null) {
-      tokenEndpoint = Uri.parse(tokenEndpoint);
+      tokenEndpointUri = Uri.parse(tokenEndpoint as String);
     }
+
     var expiration = parsed['expiration'];
+    DateTime? expirationDateTime;
     if (expiration != null) {
       validate(expiration is int,
           'field "expiration" was not an int, was "$expiration"');
-      expiration = DateTime.fromMillisecondsSinceEpoch(expiration);
+      expiration = expiration as int;
+      expirationDateTime = DateTime.fromMillisecondsSinceEpoch(expiration);
     }
 
-    return Credentials(parsed['accessToken'],
-        refreshToken: parsed['refreshToken'],
-        idToken: parsed['idToken'],
-        tokenEndpoint: tokenEndpoint,
-        scopes: (scopes as List).map((scope) => scope as String),
-        expiration: expiration);
+    return Credentials(
+      parsed['accessToken'] as String,
+      refreshToken: parsed['refreshToken'] as String?,
+      idToken: parsed['idToken'] as String?,
+      tokenEndpoint: tokenEndpointUri,
+      scopes: (scopes as List).map((scope) => scope as String),
+      expiration: expirationDateTime,
+    );
   }
 
   /// Serializes a set of credentials to JSON.

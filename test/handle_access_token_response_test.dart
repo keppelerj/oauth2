@@ -5,11 +5,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:test/test.dart';
-
 import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:oauth2/src/handle_access_token_response.dart';
 import 'package:oauth2/src/parameters.dart';
+import 'package:test/test.dart';
 
 import 'utils.dart';
 
@@ -34,7 +33,7 @@ void main() {
         handle(http.Response(body, statusCode, headers: headers));
 
     test('causes an AuthorizationException', () {
-      expect(() => handleError(), throwsAuthorizationException);
+      expect(handleError, throwsAuthorizationException);
     });
 
     test('with a 401 code causes an AuthorizationException', () {
@@ -116,11 +115,11 @@ void main() {
   group('a success response', () {
     oauth2.Credentials handleSuccess(
         {String contentType = 'application/json',
-        accessToken = 'access token',
-        tokenType = 'bearer',
-        expiresIn,
-        refreshToken,
-        scope}) {
+        Object? accessToken = 'access token',
+        Object? tokenType = 'bearer',
+        Object? expiresIn,
+        Object? refreshToken,
+        Object? scope}) {
       return handle(http.Response(
           jsonEncode({
             'access_token': accessToken,
@@ -163,11 +162,15 @@ void main() {
     });
 
     test('with custom getParameters() returns the correct credentials', () {
-      var body = '_' +
-          jsonEncode({'token_type': 'bearer', 'access_token': 'access token'});
+      var body = '_${jsonEncode({
+            'token_type': 'bearer',
+            'access_token': 'access token'
+          })}';
       var credentials = handle(
-          http.Response(body, 200, headers: {'content-type': 'text/plain'}),
-          getParameters: (contentType, body) => jsonDecode(body.substring(1)));
+        http.Response(body, 200, headers: {'content-type': 'text/plain'}),
+        getParameters: (contentType, body) =>
+            jsonDecode(body.substring(1)) as Map<String, dynamic>,
+      );
       expect(credentials.accessToken, equals('access token'));
       expect(credentials.tokenEndpoint.toString(),
           equals(tokenEndpoint.toString()));
@@ -269,11 +272,11 @@ void main() {
   group('a success response with a id_token', () {
     oauth2.Credentials handleSuccess(
         {String contentType = 'application/json',
-        accessToken = 'access token',
-        tokenType = 'bearer',
-        expiresIn,
-        idToken = 'decode me',
-        scope}) {
+        Object? accessToken = 'access token',
+        Object? tokenType = 'bearer',
+        Object? expiresIn,
+        Object? idToken = 'decode me',
+        Object? scope}) {
       return handle(http.Response(
           jsonEncode({
             'access_token': accessToken,
